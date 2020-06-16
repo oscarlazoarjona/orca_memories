@@ -10,4 +10,4 @@ from lib import (time_bandwith_product, set_parameters_ladder,
                  calculate_optimal_input_xi, num_integral,
                  calculate_optimal_input_Z,
                  calculate_optimal_input_tau,
-                 solve_fdm)
+                 solve_fdm, check_fdm)

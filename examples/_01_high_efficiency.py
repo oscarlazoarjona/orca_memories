@@ -6,7 +6,7 @@ r"""This script calculates the numerical storage and retrieval of the
 optimal input signal that the analytic theory suggests using feasible
 parameters and getting high efficiency.
 """
-
+from __future__ import print_function
 from pickle import dump
 import numpy as np
 from matplotlib import pyplot as plt
