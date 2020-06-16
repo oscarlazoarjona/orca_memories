@@ -1,17 +1,20 @@
 Solvers and accessories for Off-Resonant cascaded absorption quantum memories.
 
-This package is currently written for Python 2.7, and all Python commands should use this version (until a new release happens).
+This package is currently written for Python 2.7, and all Python commands should use this version (until a new release happens). The following commands assume a UNIX-like OS.
 
 Installation
 ============
-To install the latest unstable version (this requires git):
+Clone the latest version and install using pip:
 
-    $ pip install git+git://github.com/oscarlazoarjona/orca_memories
+    $ git clone https://github.com/oscarlazoarjona/orca_memories
+    $ pip install orca_memories/
 
-To upgrade to the latest unstable version (this requires git):
+To upgrade to a later version:
 
-    $ pip install git+git://github.com/oscarlazoarjona/orca_memories --upgrade
+    $ git pull
+    $ pip install orca_memories/ --upgrade
+
 
 To uninstall:
 
-    $ pip uninstall git+git://github.com/oscarlazoarjona/orca_memories
+    $ pip uninstall orca_memories
