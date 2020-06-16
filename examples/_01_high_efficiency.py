@@ -8,18 +8,16 @@ optimal input signal that the analytic theory suggests.
 
 import numpy as np
 from matplotlib import pyplot as plt
-from orca_memories.lib import (time_bandwith_product, set_parameters_ladder,
-                               calculate_pulse_energy, print_params,
-                               build_mesh_fdm, sketch_frame_transform,
-                               calculate_xi0, calculate_F,
-                               calculate_optimal_input_xi, num_integral,
-                               calculate_optimal_input_Z,
-                               calculate_optimal_input_tau,
-                               solve_fdm)
-
+from orca_memories import (time_bandwith_product, set_parameters_ladder,
+                           calculate_pulse_energy, print_params,
+                           build_mesh_fdm, sketch_frame_transform,
+                           calculate_xi0, calculate_F,
+                           calculate_optimal_input_xi, num_integral,
+                           calculate_optimal_input_Z,
+                           calculate_optimal_input_tau,
+                           solve_fdm)
 from scipy.constants import c
-# from pickle import load
-# from quantum_memories.misc import simple_complex_plot
+
 # We establish base parameters.
 folder = "__01__high_efficiency/"
 name = ""
@@ -28,7 +26,7 @@ plots = True
 calculate = True
 calculate_greens = False
 
-# Set the parameters.
+# Set the memory parameters.
 if True:
     # The cell to control pulse ratio:
     l = 1.6
@@ -36,10 +34,15 @@ if True:
     lp = 2*l
     tauw = 300e-12
     D = lp*tauw*c/2
-    #######################
-
-    sigma_power1 = time_bandwith_product(1)/tauw
+    ########################################################################
+    # The bandwidth of the control pulse is chosen so that it is a
+    # Fourier-limited square pulse with intensity FWHM in time tauw.
     sigma_power2 = time_bandwith_product("oo")/tauw
+
+    # The bandwidth of the signal pulse is chosen so that it is a
+    # Fourier-limited Gaussian pulse with intensity FWHM in time tauw.
+    sigma_power1 = time_bandwith_product(1)/tauw
+    ########################################################################
 
     params = {"verbose": 1,
               "nshg": 0, "USE_HG_SIG": True,
@@ -53,16 +56,24 @@ if True:
               "USE_SQUARE_CTRL": True, "nwsquare": "oo", "nrsquare": "oo",
               "element": "Rb", "isotope": 87}
     params = set_parameters_ladder(params)
+
+    ########################################################################
+    # We use the analytic theory to calculate the optimal pulse energy,
+    # (that would allow unit efficiency for a narrowband signal and an
+    # infinite cell.)
     Ecrit = calculate_pulse_energy(params)
+    # We set the pulse energy to that value.
     params["energy_pulse2"] = Ecrit
+    ########################################################################
     print_params(params)
     print("")
     params, Z, tau, tau1, tau2, tau3 = build_mesh_fdm(params)
     sketch_frame_transform(params, folder=folder, draw_readout=False)
 # Calculate the optimal signal.
 if True:
+    ########################################################################
+    # In xi-space.
     xi0 = calculate_xi0(params)
-
     Deltaxi = 2/c/tauw
     xi = np.linspace(xi0-4*Deltaxi/2, xi0+4*Deltaxi/2, 1001)
     Gammaxi = calculate_F(params, xi)
@@ -76,17 +87,27 @@ if True:
     print("Critical energy: {:.2f} nJ".format(Ecrit*1e9))
     print("Analytic-theory efficiency:  {:.4f}".format(eta_ana))
 
-    #################################################
+    ########################################################################
     # In Z-space
     Z__, S0Z = calculate_optimal_input_Z(params)
+    ########################################################################
     # In tau-space
     tau, S0tau = calculate_optimal_input_tau(params)
 # # We calculate the write-in process.
 if calculate:
+    # NOTE: set analytic_storage to 2 for faster calculation.
     kwargs = {"plots": True, "folder": folder, "name": "write", "verbose": 0,
               "analytic_storage": 1, "S0t": S0tau}
     tau, Z, Bw, Sw = solve_fdm(params, **kwargs)
-
+# We calculate the read-out process.
+if calculate:
+    B0_stored = Bw[-1, :]
+    # NOTE: set analytic_storage to 2 for faster calculation.
+    kwargs = {"plots": True, "folder": folder, "name": "read", "verbose": 0,
+              "analytic_storage": 1, "B0z": B0_stored}
+    tau, Z, Br, Sr = solve_fdm(params, **kwargs)
+# We calculate the Beam-splitter picture transmissivities and reflectivities.
+if True:
     NS = num_integral(np.abs(Sw[:, 0])**2, tau)
     NST = num_integral(np.abs(Sw[:, -1])**2, tau)
 
@@ -95,12 +116,7 @@ if calculate:
 
     TS = NST/NS
     RS = 1 - TS
-# We calculate the read-out process.
-if calculate:
-    B0_stored = Bw[-1, :]
-    kwargs = {"plots": True, "folder": folder, "name": "read", "verbose": 0,
-              "analytic_storage": 1, "B0z": B0_stored}
-    tau, Z, Br, Sr = solve_fdm(params, **kwargs)
+
     NB = num_integral(np.abs(Br[0, :])**2, tau)
     NBT = num_integral(np.abs(Br[-1, :])**2, tau)
     TB = NBT/NB

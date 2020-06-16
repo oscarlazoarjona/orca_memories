@@ -621,11 +621,11 @@ def set_parameters_ladder(custom_parameters=None, fitted_couplings=True,
 
 def print_params(params):
     r"""Print parameters."""
-    Nt = params["Nt"]
-    Nz = params["Nz"]
-    T = params["T"]
+    # Nt = params["Nt"]
+    # Nz = params["Nz"]
+    # T = params["T"]
     L = params["L"]
-    D = L*1.05
+    # D = L*1.05
     # hbar = params["hbar"]
     # epsilon_0 = params["epsilon_0"]
     # e_charge = params["e_charge"]
@@ -651,8 +651,8 @@ def print_params(params):
     ZRs, ZRc = rayleigh_range(params)
     Ecrit = calculate_pulse_energy(params)
 
-    print("Grid size: %i x %i = %i points" % (Nt, Nz, Nt*Nz))
-    print("Spacetime size: %2.3f ns, %2.3f cm" % (T*1e9, D*100))
+    # print("Grid size: %i x %i = %i points" % (Nt, Nz, Nt*Nz))
+    # print("Spacetime size: %2.3f ns, %2.3f cm" % (T*1e9, D*100))
     print("Atom: {}{}".format(params["element"], params["isotope"]))
     print("delta1: %2.3f GHz" % (delta1/2/np.pi*1e-9))
     print("delta2: %2.3f GHz" % (delta2/2/np.pi*1e-9))
@@ -671,7 +671,7 @@ def print_params(params):
     print("Critical pulse energy: {:10.3f} nJ".format(Ecrit*1e9))
     aux = [t0s*1e9, t0w*1e9, t0r*1e9]
     print("t0s: {:2.3f} ns, t0w: {:2.3f} ns, t0r: {:2.3f} ns".format(*aux))
-    print("L: {:2.3f} cm, T: {:2.3f} ns".format(L*100, T*1e9))
+    print("L: {:2.3f} cm".format(L*100))
     print("Temperature: {:6.2f} °C".format(Temperature-273.15))
     print("n: {:.2e} m^-3 ".format(n))
     print("kappa: {:.2e} sqrt((m s)^-1)".format(kappa))
