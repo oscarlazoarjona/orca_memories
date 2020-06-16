@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 # Compatible with Python 2.7.xx
-# Copyright (C) 2019 Oscar Gerardo Lazo Arjona
+# Copyright (C) 2019-2020 Oscar Gerardo Lazo Arjona
 # mailto: oscar.lazoarjona@physics.ox.ac.uk
 r"""This script calculates the numerical storage and retrieval of the
-optimal input signal that the analytic theory suggests.
+optimal input signal that the analytic theory suggests using feasible
+parameters and getting high efficiency.
 """
 
+from pickle import dump
 import numpy as np
 from matplotlib import pyplot as plt
 from orca_memories import (time_bandwith_product, set_parameters_ladder,
@@ -85,7 +87,7 @@ if True:
     eta_ana = Nf/N0
 
     print("Critical energy: {:.2f} nJ".format(Ecrit*1e9))
-    print("Analytic-theory efficiency:  {:.4f}".format(eta_ana))
+    print("Analytic-theory efficiency: {:.4f}".format(eta_ana))
 
     ########################################################################
     # In Z-space
@@ -125,11 +127,15 @@ if True:
     Nf = num_integral(np.abs(Sr[:, -1])**2, tau)
     eta_num = Nf/NS
 
-    print("Numerical efficiency: {:.4f}".format(eta_num))
+    print("Numerical efficiency      : {:.4f}".format(eta_num))
     print("")
     print("Beam-splitter picture transmissivities and reflectivities:")
     print("TB: {:.4f}, RS: {:.4f}".format(TB, RS))
     print("RB: {:.4f}, TS: {:.4f}".format(RB, TS))
+# Save the results.
+if True:
+    dump([tau, Z, Bw, Sw], open(folder+"solution_write.pickle", "wb"))
+    dump([tau, Z, Br, Sr], open(folder+"solution_read.pickle", "wb"))
 if calculate and plots:
     fs = 15
     ######################################################################
