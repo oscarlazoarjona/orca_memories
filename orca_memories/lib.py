@@ -19,8 +19,47 @@ from sympy import log, pi, oo, zeros, Matrix
 from sympy import factorial as sym_fact
 from math import factorial as num_fact
 from matplotlib import pyplot as plt
+from matplotlib.colors import LogNorm
 ##############################################################################
 # Basic routines.
+
+
+def rel_error(a, b):
+    r"""Get the relative error between two quantities."""
+    scalar = not hasattr(a, "__getitem__")
+    if scalar:
+        a = np.abs(a)
+        b = np.abs(b)
+        if a == 0.0 and b == 0.0:
+            return 0.0
+        if a > b:
+            return 1 - b/a
+        else:
+            return 1 - a/b
+
+    shape = [2] + list(a.shape)
+    aux = np.zeros(shape)
+    aux[0, :] = np.abs(a)
+    aux[1, :] = np.abs(b)
+
+    small = np.amin(aux, axis=0)
+    large = np.amax(aux, axis=0)
+
+    # Replace zeros with one, to avoid zero-division errors.
+    small[small == 0] = 1
+    large[large == 0] = 1
+    err = 1-small/large
+    if scalar:
+        return err[0]
+    return err
+
+
+def glo_error(a, b):
+    r"""Get the "global" relative error between two quantities."""
+    scale = np.amax([np.amax(np.abs(a)), np.amax(np.abs(b))])
+    if scale == 0.0:
+        return np.zeros(a.shape)
+    return np.abs(a-b)/scale
 
 
 def interpolator(xp, fp, kind="linear"):
@@ -114,9 +153,6 @@ def num_integral(f, dt):
     F += (f[1] + f[-1])*0.5
     return np.real(F*dt)
 
-
-##############################################################################
-# Jupyter routines.
 
 ##############################################################################
 # Memory routines.
@@ -2340,6 +2376,166 @@ def eqs_fdm(params, tau, Z, Omegat="square", case=0, adiabatic=True,
 ##############################################################################
 # Checks.
 
+def check_block_fdm(params, B, S, tau, Z, case=0, P=None,
+                    pt=4, pz=4, folder="", plots=False, verbose=1):
+    r"""Check the equations in an FDM block."""
+    # We build the derivative operators.
+    Nt = tau.shape[0]
+    Nz = Z.shape[0]
+    Gamma32 = calculate_Gamma32(params)
+    Gamma21 = calculate_Gamma21(params)
+    Omega = calculate_Omega(params)
+    kappa = calculate_kappa(params)
+    Dt = derivative_operator(tau, p=pt)
+    Dz = derivative_operator(Z, p=pt)
+
+    adiabatic = P is None
+
+    # Empty space.
+    if case == 0 and adiabatic:
+        # We get the time derivatives.
+        DtB = np.array([np.dot(Dt, B[:, jj]) for jj in range(Nz)]).T
+        DtS = np.array([np.dot(Dt, S[:, jj]) for jj in range(Nz)]).T
+
+        DzS = np.array([np.dot(Dz, S[ii, :]) for ii in range(Nt)])
+        rhsB = -Gamma32*B
+        rhsS = -c/2*DzS
+    # Storage phase.
+    elif case == 1 and adiabatic:
+        # We get the time derivatives.
+        DtB = np.array([np.dot(Dt, B[:, jj]) for jj in range(Nz)]).T
+        DtS = np.array([np.dot(Dt, S[:, jj]) for jj in range(Nz)]).T
+
+        DzS = np.array([np.dot(Dz, S[ii, :]) for ii in range(Nt)])
+        rhsB = -Gamma32*B
+        rhsS = -c/2*DzS - c*kappa**2/2/Gamma21*S
+    # Memory write/read phase.
+    elif case == 2 and adiabatic:
+        # We get the time derivatives.
+        DtB = np.array([np.dot(Dt, B[:, jj]) for jj in range(Nz)]).T
+        DtS = np.array([np.dot(Dt, S[:, jj]) for jj in range(Nz)]).T
+
+        DzS = np.array([np.dot(Dz, S[ii, :]) for ii in range(Nt)])
+        rhsB = -Gamma32*B
+        rhsS = -c/2*DzS - c*kappa**2/2/Gamma21*S
+
+        rhsB += -np.abs(Omega)**2/Gamma21*B
+        rhsB += -kappa*Omega/Gamma21*S
+        rhsS += -c*kappa*np.conjugate(Omega)/2/Gamma21*B
+
+    else:
+        raise ValueError
+
+    if True:
+        # We put zeros into the boundaries.
+        ig = pt/2 + 1
+        ig = pt + 1
+        ig = 1
+
+        DtB[:ig, :] = 0
+        DtS[:ig, :] = 0
+        DtS[:, :ig] = 0
+
+        rhsB[:ig, :] = 0
+        rhsS[:ig, :] = 0
+        rhsS[:, :ig] = 0
+
+        # We put zeros in all the boundaries to neglect border effects.
+        DtB[-ig:, :] = 0
+        DtS[-ig:, :] = 0
+        DtB[:, :ig] = 0
+        DtB[:, -ig:] = 0
+        DtS[:, -ig:] = 0
+
+        rhsB[-ig:, :] = 0
+        rhsS[-ig:, :] = 0
+        rhsB[:, :ig] = 0
+        rhsB[:, -ig:] = 0
+        rhsS[:, -ig:] = 0
+
+    if True:
+        Brerr = rel_error(DtB, rhsB)
+        Srerr = rel_error(DtS, rhsS)
+
+        Bgerr = glo_error(DtB, rhsB)
+        Sgerr = glo_error(DtS, rhsS)
+
+        i1, j1 = np.unravel_index(Srerr.argmax(), Srerr.shape)
+        i2, j2 = np.unravel_index(Sgerr.argmax(), Sgerr.shape)
+
+        with warnings.catch_warnings():
+            mes = r'divide by zero encountered in log10'
+            warnings.filterwarnings('ignore', mes)
+
+            aux1 = list(np.log10(get_range(Brerr)))
+            aux1 += [np.log10(np.mean(Brerr))]
+            aux1 += list(np.log10(get_range(Srerr)))
+            aux1 += [np.log10(np.abs(np.mean(Srerr)))]
+
+            aux2 = list(np.log10(get_range(Bgerr)))
+            aux2 += [np.log10(np.mean(Bgerr))]
+            aux2 += list(np.log10(get_range(Sgerr)))
+            aux2 += [np.log10(np.mean(Sgerr))]
+
+        aux1[1], aux1[2] = aux1[2], aux1[1]
+        aux1[-1], aux1[-2] = aux1[-2], aux1[-1]
+        aux2[1], aux2[2] = aux2[2], aux2[1]
+        aux2[-1], aux2[-2] = aux2[-2], aux2[-1]
+
+        if verbose > 0:
+            print("Left and right hand sides comparison:")
+            print("        Bmin   Bave   Bmax   Smin   Save   Smax")
+            mes = "{:6.2f} {:6.2f} {:6.2f} {:6.2f} {:6.2f} {:6.2f}"
+            print("rerr: "+mes.format(*aux1))
+            print("gerr: "+mes.format(*aux2))
+    if plots:
+        args = [tau, Z, Brerr, Srerr, folder, "check_01_eqs_rerr"]
+        kwargs = {"log": True, "ii": i1, "jj": j1}
+        plot_solution(*args, **kwargs)
+
+        args = [tau, Z, Bgerr, Sgerr, folder, "check_02_eqs_gerr"]
+        kwargs = {"log": True, "ii": i2, "jj": j2}
+        plot_solution(*args, **kwargs)
+
+    return aux1, aux2, Brerr, Srerr, Bgerr, Sgerr
+
+
+def check_fdm(params, B, S, tau, Z, P=None,
+              pt=4, pz=4, folder="", name="check", plots=False, verbose=1):
+    r"""Check the equations in an FDM block."""
+    params, Z, tau, tau1, tau2, tau3 = build_mesh_fdm(params)
+    N1 = len(tau1)
+    N2 = len(tau2)
+    # N3 = len(tau3)
+
+    # S1 = S[:N1]
+    S2 = S[N1-1:N1-1+N2]
+    # S3 = S[N1-1+N2-1:N1-1+N2-1+N3]
+
+    # B1 = B[:N1]
+    B2 = B[N1-1:N1-1+N2]
+    # B3 = B[N1-1+N2-1:N1-1+N2-1+N3]
+
+    Brerr = np.zeros(B.shape)
+    Srerr = np.zeros(B.shape)
+    Bgerr = np.zeros(B.shape)
+    Sgerr = np.zeros(B.shape)
+
+    print("the log_10 of relative and global errors (for B and S):")
+    ####################################################################
+    kwargs = {"case": 2, "folder": folder, "plots": False}
+    aux = check_block_fdm(params, B2, S2, tau2, Z, **kwargs)
+    checks2_rerr, checks2_gerr, B2rerr, S2rerr, B2gerr, S2gerr = aux
+
+    Brerr[N1-1:N1-1+N2] = B2rerr
+    Srerr[N1-1:N1-1+N2] = S2rerr
+    Bgerr[N1-1:N1-1+N2] = B2gerr
+    Sgerr[N1-1:N1-1+N2] = S2gerr
+    ####################################################################
+    if plots:
+        plot_solution(tau, Z, Brerr, Srerr, folder, "rerr"+name, log=True)
+        plot_solution(tau, Z, Bgerr, Sgerr, folder, "gerr"+name, log=True)
+
 
 #############################################################################
 # Graphical routines.
@@ -2494,3 +2690,60 @@ def sketch_frame_transform(params, folder="", name="", draw_readout=False,
         # plt.ylim(None, 1.5)
         plt.savefig(folder+"sketch_"+name+".png", bbox_inches="tight")
         plt.close()
+
+
+def get_range(fp):
+    r"""Get the range of an array."""
+    fp = np.abs(fp)
+    aux = fp.copy()
+    aux[aux == 0] = np.amax(fp)
+    vmin = np.amin(aux)
+
+    vmax = np.amax(fp)
+    return np.array([vmin, vmax])
+
+
+def get_lognorm(fp):
+    r"""Get a log norm to plot 2d functions."""
+    fp = np.abs(fp)
+    aux = fp.copy()
+    aux[aux == 0] = np.amax(fp)
+    vmin = np.amin(aux)
+
+    vmax = np.amax(fp)
+    if vmin < 1e-15:
+        vmin = 1e-15
+    if vmin == vmax:
+        vmin = 1e-15
+        vmax = 1.0
+    if vmax == 0:
+        vmax = 1.0
+
+    return LogNorm(vmin=vmin, vmax=vmax)
+
+
+def plot_solution(tau, Z, B, S, folder, name,
+                  log=False, colorbar=True, ii=None, jj=None):
+    r"""Plot a solution."""
+    plt.figure(figsize=(19, 8))
+    plt.subplot(1, 2, 1)
+    if log:
+        cb = plt.pcolormesh(Z*100, tau*1e9, np.abs(B), norm=get_lognorm(B))
+    else:
+        cb = plt.pcolormesh(Z*100, tau*1e9, np.abs(B))
+    if colorbar: plt.colorbar(cb)
+    plt.ylabel(r"$\tau$ (ns)")
+    plt.xlabel("$Z$ (cm)")
+
+    plt.subplot(1, 2, 2)
+    if log:
+        cb = plt.pcolormesh(Z*100, tau*1e9, np.abs(S), norm=get_lognorm(S))
+    else:
+        cb = plt.pcolormesh(Z*100, tau*1e9, np.abs(S))
+    if ii is not None:
+        plt.plot(Z[jj]*100, tau[ii]*1e9, "rx")
+    if colorbar: plt.colorbar(cb)
+    plt.ylabel(r"$\tau$ (ns)")
+    plt.xlabel("$Z$ (cm)")
+    plt.savefig(folder+name+".png", bbox_inches="tight")
+    plt.close("all")
