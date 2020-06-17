@@ -53,6 +53,8 @@ Running a high efficiency memory with feasible parameters:
     TB: 0.0921, RS: 0.8819
     RB: 0.9079, TS: 0.1181
 
+![](https://raw.githubusercontent.com/oscarlazoarjona/orca_memories/master/pictures/high_efficiency.png)
+
 Checking this solution against the differential equations:
 
     orca_memories/examples$ python _01_high_efficiency.py
