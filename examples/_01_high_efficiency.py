@@ -155,8 +155,8 @@ if calculate and plots:
     ax1.set_xlabel(r"$\tau \ [ns]$", fontsize=fs)
     ax1.set_ylabel(r"$|S|^2$  [1/ns]", fontsize=fs)
     ax2.set_ylabel(r"Phase  [revolutions]", fontsize=fs)
-    ax1.legend(loc=2)
-    plt.savefig(folder+"Sft_complete.png", bbox_inches="tight")
+    ax1.legend(loc=6)
+    plt.savefig(folder+"high_efficiency.png", bbox_inches="tight")
     plt.close()
     ######################################################################
 
