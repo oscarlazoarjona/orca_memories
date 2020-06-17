@@ -23,10 +23,9 @@ from scipy.constants import c
 # We establish base parameters.
 folder = "__01__high_efficiency/"
 name = ""
-plots = False; calculate = False; calculate_greens = False
+plots = False; calculate = False
 plots = True
 calculate = True
-calculate_greens = False
 
 # Set the memory parameters.
 if True:
@@ -78,11 +77,13 @@ if True:
     xi0 = calculate_xi0(params)
     Deltaxi = 2/c/tauw
     xi = np.linspace(xi0-4*Deltaxi/2, xi0+4*Deltaxi/2, 1001)
+
     Gammaxi = calculate_F(params, xi)
     xi, S0xi = calculate_optimal_input_xi(params, xi)
     Sfxi = Gammaxi*S0xi
 
-    N0 = num_integral(np.abs(S0xi)**2, xi)
+    # The initial normalization of the xi signal (instead of integrating).
+    N0 = c/2
     Nf = num_integral(np.abs(Sfxi)**2, xi)
     eta_ana = Nf/N0
 
@@ -95,6 +96,7 @@ if True:
     ########################################################################
     # In tau-space
     tau, S0tau = calculate_optimal_input_tau(params)
+
 # # We calculate the write-in process.
 if calculate:
     # NOTE: set analytic_storage to 2 for faster calculation.
@@ -109,7 +111,7 @@ if calculate:
               "analytic_storage": 1, "B0z": B0_stored}
     tau, Z, Br, Sr = solve_fdm(params, **kwargs)
 # We calculate the Beam-splitter picture transmissivities and reflectivities.
-if True:
+if calculate:
     NS = num_integral(np.abs(Sw[:, 0])**2, tau)
     NST = num_integral(np.abs(Sw[:, -1])**2, tau)
 
@@ -133,7 +135,7 @@ if True:
     print("TB: {:.4f}, RS: {:.4f}".format(TB, RS))
     print("RB: {:.4f}, TS: {:.4f}".format(RB, TS))
 # Save the results.
-if True:
+if calculate:
     dump([tau, Z, Bw, Sw], open(folder+"solution_write.pickle", "wb"))
     dump([tau, Z, Br, Sr], open(folder+"solution_read.pickle", "wb"))
 if calculate and plots:

@@ -952,27 +952,39 @@ def build_Z_mesh(params, uniform=True, on_cell_edge=False):
 def calculate_optimal_input_xi(params, xi=None):
     r"""Calculate the optimal `xi`-space input for the given parameters.
 
-    Note this returns a Gaussian pulse of time duration params["taus"]
+    Note that this returns a Gaussian pulse of time duration params["taus"]
     """
-    if not params["USE_SQUARE_CTRL"] or str(params["nwsquare"]) != "oo":
+    params_ = params.copy()
+    if not params_["USE_SQUARE_CTRL"] or str(params_["nwsquare"]) != "oo":
         mes = 'USE_SQUARE_CTRL must be True, and "nwsquare" must be "oo".'
         raise ValueError(mes)
     if xi is None:
-        Z = build_Z_mesh(params)
+        Z = build_Z_mesh(params_)
         xi = ffftfreq(Z)
 
-    energy_pulse2 = calculate_pulse_energy(params)
-    params["energy_pulse2"] = energy_pulse2
-    xi0 = calculate_xi0(params)
+    energy_pulse2 = calculate_pulse_energy(params_)
+    params_["energy_pulse2"] = energy_pulse2
+    xi0 = calculate_xi0(params_)
 
-    taus = params["taus"]
+    taus = params_["taus"]
+    tauw = params_["tauw"]
     DeltanuS_num = time_bandwith_product(1)/taus
     DeltaxiS_num = DeltanuS_num*2/c
     sigma_xi = DeltaxiS_num/(2*np.sqrt(np.log(2)))
 
-    tauoff = params["tauw"]/2*(c/2)
+    # We make sure that the oscillations in the signal are not too fast.
+    T0 = np.abs(1/c/xi0)
+    if taus/T0 > 5.0 or tauw/T0 > 5.0:
+        mes = "The optimal signal has a linear phase that is too fast "
+        mes += "for the grid to represent accurately. "
+        mes += "Using a flat phase instead."
+        warnings.warn(mes)
+        warnings.filterwarnings('ignore', mes)
+        xi0 = 0.0
+
+    Zoff = params_["tauw"]/2*(c/2)
     Sin = hermite_gauss(0, xi-xi0, sigma_xi)
-    Sin = Sin*np.exp(2*np.pi*1j*tauoff*xi)
+    Sin = Sin*np.exp(2*np.pi*1j*Zoff*xi)
 
     # We normalize so that the integral of the signal mod square over tau
     # is 1.
@@ -997,13 +1009,42 @@ def calculate_optimal_input_Z(params, Z=None):
     # We get a reasonable xi and Z mesh.
     xi0 = calculate_xi0(params)
     Deltaxi = 2/c/params["tauw"]
-    aa = np.amax(np.abs(np.array(xi0-20*Deltaxi/2, xi0+20*Deltaxi/2)))
+
+    a1 = xi0+20*Deltaxi/2
+    a2 = xi0-20*Deltaxi/2
+    aa = np.amax(np.abs(np.array([a1, a2])))
     xi = np.linspace(-aa, aa, 1001)
     xi, S0xi = calculate_optimal_input_xi(params, xi)
 
     # We Fourier transform it.
     Z = ffftfreq(xi)
     S0Z = iffftfft(S0xi, xi)
+
+    taus = params["taus"]
+    tauw = params["tauw"]
+    T0 = np.abs(1/c/xi0)
+    if taus/T0 > 5.0 or tauw/T0 > 5.0:
+        mes = "The optimal signal has a linear phase that is too fast "
+        mes += "for the grid to represent accurately. "
+        mes += "Using a flat phase instead."
+        warnings.warn(mes)
+        warnings.filterwarnings('ignore', mes)
+        xi0 = 0.0
+
+        Z = np.linspace(-0.25, 0.25, 1001)
+
+        DeltanuS_num = time_bandwith_product(1)/taus
+        DeltaxiS_num = DeltanuS_num*2/c
+        sigma_xi = DeltaxiS_num/(2*np.sqrt(np.log(2)))
+        Zoff = tauw/2*(c/2)
+
+        Sin = hermite_gauss(0, xi-xi0, sigma_xi)
+        Sin = Sin*np.exp(2*np.pi*1j*Zoff*xi)*np.sqrt(c/2)
+
+        # S0Z = hermite_gauss(0, Z+Zoff, 1/np.pi**2*np.sqrt(2)/sigma_xi)
+        S0Z = hermite_gauss(0, Z+Zoff, 1/2.0/np.pi/sigma_xi)
+        S0Z = S0Z*np.sqrt(c/2)
+        # S0Z = S0Z*np.exp(2*np.pi*1j*Zoff*xi)*np.sqrt(c/2)
 
     if not band:
         S0Z_interp = interpolator(Z, S0Z, kind="cubic")

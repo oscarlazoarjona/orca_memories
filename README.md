@@ -46,8 +46,8 @@ Running a high efficiency memory with feasible parameters:
     kappa: 2.34e+06 sqrt((m s)^-1)
 
     Critical energy: 1.88 nJ
-    Analytic-theory efficiency:  0.7953
-    Numerical efficiency: 0.7862
+    Analytic-theory efficiency: 0.7953
+    Numerical efficiency      : 0.7862
 
     Beam-splitter picture transmissivities and reflectivities:
     TB: 0.0921, RS: 0.8819
