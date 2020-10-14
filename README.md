@@ -1,7 +1,5 @@
 Solvers and accessories for Off-Resonant cascaded absorption quantum memories.
 
-This package is currently written for Python 2.7, and all Python commands should use this version (until a new release happens). The following commands assume a UNIX-like OS.
-
 Installation
 ============
 Clone and install using pip:
