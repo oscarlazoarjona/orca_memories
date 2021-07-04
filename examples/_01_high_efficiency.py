@@ -65,11 +65,15 @@ if True:
     Ecrit = calculate_pulse_energy(params)
     # We set the pulse energy to that value.
     params["energy_pulse2"] = Ecrit
+    # print(888, params["energy_pulse2"])
     ########################################################################
-    print_params(params)
+    # print_params(params)
     print("")
     params, Z, tau, tau1, tau2, tau3 = build_mesh_fdm(params)
     sketch_frame_transform(params, folder=folder, draw_readout=False)
+    # from quantum_memories.orca import calculate_kappa
+    # print(444, calculate_kappa(params))
+    # print(444, calculate_pulse_energy(params))
 # Calculate the optimal signal.
 if True:
     ########################################################################
@@ -100,81 +104,95 @@ if True:
 # # We calculate the write-in process.
 if calculate:
     # NOTE: set analytic_storage to 2 for faster calculation.
+    f = open("pick0.pickle", "w")
+    f.write(str(params))
+    f.close()
+
+    # print(222, S0tau.shape)
+    f = open("pick04.pickle", "w")
+    f.write(str(S0tau.tolist()))
+    f.close()
+
     kwargs = {"plots": True, "folder": folder, "name": "write", "verbose": 0,
               "analytic_storage": 1, "S0t": S0tau}
     tau, Z, Bw, Sw = solve_fdm(params, **kwargs)
+
+    f = open("pick02.pickle", "w")
+    f.write(str(Sw[:, -1].tolist()))
+    f.close()
+
 # We calculate the read-out process.
-if calculate:
-    B0_stored = Bw[-1, :]
-    # NOTE: set analytic_storage to 2 for faster calculation.
-    kwargs = {"plots": True, "folder": folder, "name": "read", "verbose": 0,
-              "analytic_storage": 1, "B0z": B0_stored}
-    tau, Z, Br, Sr = solve_fdm(params, **kwargs)
-# We calculate the Beam-splitter picture transmissivities and reflectivities.
-if calculate:
-    NS = num_integral(np.abs(Sw[:, 0])**2, tau)
-    NST = num_integral(np.abs(Sw[:, -1])**2, tau)
-
-    Nt1 = tau1.shape[0]
-    S0Z_num = Sw[Nt1-1, :]
-
-    TS = NST/NS
-    RS = 1 - TS
-
-    NB = num_integral(np.abs(Br[0, :])**2, tau)
-    NBT = num_integral(np.abs(Br[-1, :])**2, tau)
-    TB = NBT/NB
-    RB = 1 - TB
-
-    Nf = num_integral(np.abs(Sr[:, -1])**2, tau)
-    eta_num = Nf/NS
-
-    print("Numerical efficiency      : {:.4f}".format(eta_num))
-    print("")
-    print("Beam-splitter picture transmissivities and reflectivities:")
-    print("TB: {:.4f}, RS: {:.4f}".format(TB, RS))
-    print("RB: {:.4f}, TS: {:.4f}".format(RB, TS))
+# if calculate:
+#     B0_stored = Bw[-1, :]
+#     # NOTE: set analytic_storage to 2 for faster calculation.
+#     kwargs = {"plots": True, "folder": folder, "name": "read", "verbose": 0,
+#               "analytic_storage": 1, "B0z": B0_stored}
+#     tau, Z, Br, Sr = solve_fdm(params, **kwargs)
+# # We calculate the Beam-splitter picture transmissivities and reflectivities.
+# if calculate:
+#     NS = num_integral(np.abs(Sw[:, 0])**2, tau)
+#     NST = num_integral(np.abs(Sw[:, -1])**2, tau)
+#
+#     Nt1 = tau1.shape[0]
+#     S0Z_num = Sw[Nt1-1, :]
+#
+#     TS = NST/NS
+#     RS = 1 - TS
+#
+#     NB = num_integral(np.abs(Br[0, :])**2, tau)
+#     NBT = num_integral(np.abs(Br[-1, :])**2, tau)
+#     TB = NBT/NB
+#     RB = 1 - TB
+#
+#     Nf = num_integral(np.abs(Sr[:, -1])**2, tau)
+#     eta_num = Nf/NS
+#
+#     print("Numerical efficiency      : {:.4f}".format(eta_num))
+#     print("")
+#     print("Beam-splitter picture transmissivities and reflectivities:")
+#     print("TB: {:.4f}, RS: {:.4f}".format(TB, RS))
+#     print("RB: {:.4f}, TS: {:.4f}".format(RB, TS))
 # Save the results.
 if calculate:
     dump([tau, Z, Bw, Sw], open(folder+"solution_write.pickle", "wb"))
-    dump([tau, Z, Br, Sr], open(folder+"solution_read.pickle", "wb"))
-if calculate and plots:
-    fs = 15
-    ######################################################################
-    fig, ax1 = plt.subplots()
-    ax2 = ax1.twinx()
-    ax1.plot(tau*1e9, np.abs(Sw[:, 0])**2*1e-9, "b-", label="Input")
-    ax1.plot(tau*1e9, np.abs(Sw[:, -1])**2*1e-9, "r-", label="Leaked")
-    ax1.plot(tau*1e9, np.abs(Sr[:, -1])**2*1e-9, "g-", label="Output")
-
-    angle1 = np.unwrap(np.angle(Sw[:, 0]))/2/np.pi
-    angle2 = np.unwrap(np.angle(Sw[:, -1]))/2/np.pi
-    angle3 = np.unwrap(np.angle(Sr[:, -1]))/2/np.pi
-    ax2.plot(tau*1e9, angle1, "b:")
-    ax2.plot(tau*1e9, angle2, "r:")
-    ax2.plot(tau*1e9, angle3, "g:")
-
-    ax1.set_xlabel(r"$\tau \ [ns]$", fontsize=fs)
-    ax1.set_ylabel(r"$|S|^2$  [1/ns]", fontsize=fs)
-    ax2.set_ylabel(r"Phase  [revolutions]", fontsize=fs)
-    ax1.legend(loc=6)
-    plt.savefig(folder+"high_efficiency.png", bbox_inches="tight")
-    plt.close()
-    ######################################################################
-
-    fig, ax = plt.subplots(1, 1, figsize=(15, 8))
-    ax2 = ax.twinx()
-
-    ax.plot(xi, np.abs(Gammaxi), "k-", label=r"$F(\xi)$")
-    ax2.plot(xi, np.abs(S0xi), "b-", label=r"$S(\tau=0, \xi)$")
-    ax2.plot(xi, np.abs(Sfxi), "g-", label=r"$S(\tau=\tau_f, \xi)$")
-
-    ax.grid(True)
-    ax.legend(fontsize=fs, loc=2)
-    ax2.legend(fontsize=fs, loc=1)
-    ax.set_xlabel(r"$\xi \ [1/m]$", fontsize=fs)
-    ax.set_ylabel(r"$F(\xi)$", fontsize=fs)
-    ax2.set_ylabel(r"$S(\xi) \ [m]$", fontsize=fs)
-
-    plt.savefig(folder+"Gamma_xi.png", bbox_inches="tight")
-    plt.close()
+#     dump([tau, Z, Br, Sr], open(folder+"solution_read.pickle", "wb"))
+# if calculate and plots:
+#     fs = 15
+#     ######################################################################
+#     fig, ax1 = plt.subplots()
+#     ax2 = ax1.twinx()
+#     ax1.plot(tau*1e9, np.abs(Sw[:, 0])**2*1e-9, "b-", label="Input")
+#     ax1.plot(tau*1e9, np.abs(Sw[:, -1])**2*1e-9, "r-", label="Leaked")
+#     ax1.plot(tau*1e9, np.abs(Sr[:, -1])**2*1e-9, "g-", label="Output")
+#
+#     angle1 = np.unwrap(np.angle(Sw[:, 0]))/2/np.pi
+#     angle2 = np.unwrap(np.angle(Sw[:, -1]))/2/np.pi
+#     angle3 = np.unwrap(np.angle(Sr[:, -1]))/2/np.pi
+#     ax2.plot(tau*1e9, angle1, "b:")
+#     ax2.plot(tau*1e9, angle2, "r:")
+#     ax2.plot(tau*1e9, angle3, "g:")
+#
+#     ax1.set_xlabel(r"$\tau \ [ns]$", fontsize=fs)
+#     ax1.set_ylabel(r"$|S|^2$  [1/ns]", fontsize=fs)
+#     ax2.set_ylabel(r"Phase  [revolutions]", fontsize=fs)
+#     ax1.legend(loc=6)
+#     plt.savefig(folder+"high_efficiency.png", bbox_inches="tight")
+#     plt.close()
+#     ######################################################################
+#
+#     fig, ax = plt.subplots(1, 1, figsize=(15, 8))
+#     ax2 = ax.twinx()
+#
+#     ax.plot(xi, np.abs(Gammaxi), "k-", label=r"$F(\xi)$")
+#     ax2.plot(xi, np.abs(S0xi), "b-", label=r"$S(\tau=0, \xi)$")
+#     ax2.plot(xi, np.abs(Sfxi), "g-", label=r"$S(\tau=\tau_f, \xi)$")
+#
+#     ax.grid(True)
+#     ax.legend(fontsize=fs, loc=2)
+#     ax2.legend(fontsize=fs, loc=1)
+#     ax.set_xlabel(r"$\xi \ [1/m]$", fontsize=fs)
+#     ax.set_ylabel(r"$F(\xi)$", fontsize=fs)
+#     ax2.set_ylabel(r"$S(\xi) \ [m]$", fontsize=fs)
+#
+#     plt.savefig(folder+"Gamma_xi.png", bbox_inches="tight")
+#     plt.close()

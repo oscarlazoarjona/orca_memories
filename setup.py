@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2017 Oscar Gerardo Lazo Arjona
+# Copyright (C) 2017-2021 Oscar Gerardo Lazo Arjona
 # mailto: oscar.lazoarjona@physics.ox.ac.uk
-
 """A setuptools based setup module."""
 # Always prefer setuptools over distutils
 from setuptools import setup, find_packages
@@ -54,7 +53,7 @@ setup(
 
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
-        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.8x',
     ],
 
     # What does your project relate to?
