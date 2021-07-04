@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
-# Compatible with Python 2.7.xx
-# Copyright (C) 2020 Oscar Gerardo Lazo Arjona
+# Copyright (C) 2016 - 2021 Oscar Gerardo Lazo Arjona
 # mailto: oscar.lazoarjona@physics.ox.ac.uk
-r"""Python module initializer."""
-from lib import (time_bandwith_product, set_parameters_ladder,
-                 calculate_pulse_energy, print_params,
-                 build_mesh_fdm, sketch_frame_transform,
-                 calculate_xi0, calculate_F,
-                 calculate_optimal_input_xi, num_integral,
-                 calculate_optimal_input_Z,
-                 calculate_optimal_input_tau,
-                 solve_fdm, check_fdm)
+r"""This is a repository for solvers for the Maxwell-Bloch equations of \
+various quantum memories, and calculations using them.
+"""
+
+__version__ = "0.2"
+
+from quantum_memories.misc import (time_bandwith_product, build_mesh_fdm,
+                                   rayleigh_range, rel_error, glo_error)
+
+from quantum_memories.orca import set_parameters_ladder
+#
+from quantum_memories.graphical import sketch_frame_transform, plot_solution
