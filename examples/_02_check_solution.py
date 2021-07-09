@@ -10,7 +10,7 @@ from pickle import load
 # import numpy as np
 # from matplotlib import pyplot as plt
 # from quantum_memories.misc import time_bandwith_product
-from quantum_memories.orca import check_fdm
+from orca_memories.orca import check_fdm
 
 # from scipy.constants import c
 

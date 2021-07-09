@@ -7,9 +7,9 @@ various quantum memories, and calculations using them.
 
 __version__ = "0.2"
 
-from quantum_memories.misc import (time_bandwith_product, build_mesh_fdm,
-                                   rayleigh_range, rel_error, glo_error)
+from orca_memories.misc import (time_bandwith_product, build_mesh_fdm,
+                                rayleigh_range, rel_error, glo_error)
 
-from quantum_memories.orca import set_parameters_ladder
+from orca_memories.orca import set_parameters_ladder
 #
-from quantum_memories.graphical import sketch_frame_transform, plot_solution
+from orca_memories.graphical import sketch_frame_transform, plot_solution

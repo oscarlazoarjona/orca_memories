@@ -13,18 +13,18 @@ from scipy.sparse import eye as sp_eye
 from matplotlib import pyplot as plt
 from sympy import oo
 
-from quantum_memories.misc import (time_bandwith_product,
-                                   vapour_number_density, rayleigh_range,
-                                   ffftfreq, iffftfft, interpolator, sinc,
-                                   hermite_gauss, num_integral, build_Z_mesh,
-                                   build_t_mesh, build_mesh_fdm, harmonic,
-                                   rel_error, glo_error, get_range)
+from orca_memories.misc import (time_bandwith_product,
+                                vapour_number_density, rayleigh_range,
+                                ffftfreq, iffftfft, interpolator, sinc,
+                                hermite_gauss, num_integral, build_Z_mesh,
+                                build_t_mesh, build_mesh_fdm, harmonic,
+                                rel_error, glo_error, get_range)
 
-from quantum_memories.fdm import (derivative_operator,
-                                  fdm_derivative_operators, bfmt, bfmtf,
-                                  set_block,
-                                  solve_fdm)
-from quantum_memories.graphical import plot_solution
+from orca_memories.fdm import (derivative_operator,
+                               fdm_derivative_operators, bfmt, bfmtf,
+                               set_block,
+                               solve_fdm)
+from orca_memories.graphical import plot_solution
 
 
 def set_parameters_ladder(custom_parameters=None, fitted_couplings=True,

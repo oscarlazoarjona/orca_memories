@@ -10,17 +10,17 @@ from __future__ import print_function
 from pickle import dump
 import numpy as np
 from matplotlib import pyplot as plt
-from quantum_memories.misc import (time_bandwith_product, num_integral)
-from quantum_memories.graphical import sketch_frame_transform
-from quantum_memories.orca import (set_parameters_ladder,
-                                   print_params,
-                                   build_mesh_fdm,
-                                   calculate_xi0, calculate_Gammap,
-                                   calculate_optimal_input_xi,
-                                   calculate_optimal_input_Z,
-                                   calculate_optimal_input_tau,
-                                   calculate_pulse_energy,
-                                   solve)
+from orca_memories.misc import (time_bandwith_product, num_integral)
+from orca_memories.graphical import sketch_frame_transform
+from orca_memories.orca import (set_parameters_ladder,
+                                print_params,
+                                build_mesh_fdm,
+                                calculate_xi0, calculate_Gammap,
+                                calculate_optimal_input_xi,
+                                calculate_optimal_input_Z,
+                                calculate_optimal_input_tau,
+                                calculate_pulse_energy,
+                                solve)
 # from quantum_memories.orca import (calculate_pulse_energy, calculate_F,
 #                                    calculate_optimal_input_xi, num_integral,
 #                                    calculate_optimal_input_Z,

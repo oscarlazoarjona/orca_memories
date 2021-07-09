@@ -17,7 +17,7 @@ from sympy import zeros, Matrix
 from sympy import factorial as sym_fact
 from math import factorial as num_fact
 
-from quantum_memories.misc import harmonic, glo_error
+from orca_memories.misc import harmonic, glo_error
 import warnings
 from pandas import unique as pdunique
 

@@ -7,7 +7,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.colors import LogNorm
 from matplotlib.gridspec import GridSpec
-from quantum_memories.misc import build_t_mesh, build_Z_mesh
+from orca_memories.misc import build_t_mesh, build_Z_mesh
 from scipy.constants import c
 
 
